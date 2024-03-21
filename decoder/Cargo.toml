@@ -46,6 +46,7 @@ serde_json = { version = "1", features = ["arbitrary_precision"] }
 [features]
 # WARNING: API and wire format subject to change.
 unstable = []
+test_support = []
 
 [package.metadata.docs.rs]
 features = ["unstable"]

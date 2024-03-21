@@ -92,8 +92,8 @@ impl TableEntry {
         Self { string, raw_symbol }
     }
 
-    #[cfg(test)]
-    fn new_without_symbol(tag: Tag, string: String) -> Self {
+    #[cfg(any(test, feature = "test_support"))]
+    pub fn new_without_symbol(tag: Tag, string: String) -> Self {
         Self {
             string: StringEntry::new(tag, string),
             raw_symbol: "<unknown>".to_string(),
@@ -162,6 +162,19 @@ pub struct Table {
 }
 
 impl Table {
+    #[cfg(feature = "test_support")]
+    pub fn new_test_table(
+        timestamp: Option<TableEntry>,
+        entries: impl IntoIterator<Item = TableEntry>,
+    ) -> Table {
+        Table {
+            timestamp,
+            entries: entries.into_iter().enumerate().collect(),
+            bitflags: Default::default(),
+            encoding: Encoding::Raw,
+        }
+    }
+
     /// Parses an ELF file and returns the decoded `defmt` table.
     ///
     /// This function returns `None` if the ELF file contains no `.defmt` section.
@@ -263,7 +276,7 @@ impl Table {
         Ok((frame, consumed))
     }
 
-    pub fn new_stream_decoder(&self) -> Box<dyn StreamDecoder + '_> {
+    pub fn new_stream_decoder(&self) -> Box<dyn StreamDecoder + Send + '_> {
         match self.encoding {
             Encoding::Raw => Box::new(stream::Raw::new(self)),
             Encoding::Rzcobs => Box::new(stream::Rzcobs::new(self)),
@@ -281,7 +294,7 @@ impl Table {
 
 // NOTE follows `parser::Type`
 #[derive(Debug, Clone, PartialEq)]
-enum Arg<'t> {
+pub enum Arg<'t> {
     /// Bool
     Bool(bool),
     F32(f32),
@@ -315,11 +328,21 @@ enum Arg<'t> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct FormatSliceElement<'t> {
+pub struct FormatSliceElement<'t> {
     // this will usually be the same format string for all elements; except when the format string
     // is an enum -- in that case `format` will be the variant
     format: &'t str,
     args: Vec<Arg<'t>>,
+}
+
+impl<'t> FormatSliceElement<'t> {
+    pub fn format(&self) -> &'t str {
+        self.format
+    }
+
+    pub fn args(&self) -> &[Arg<'t>] {
+        &self.args
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]

@@ -99,7 +99,28 @@ impl<'t> Frame<'t> {
         self.index
     }
 
-    fn format_args(&self, format: &str, args: &[Arg], parent_hint: Option<&DisplayHint>) -> String {
+    pub fn timestamp_format(&self) -> Option<&'t str> {
+        self.timestamp_format
+    }
+
+    pub fn timestamp_args(&self) -> &[Arg<'t>] {
+        &self.timestamp_args
+    }
+
+    pub fn format(&self) -> &'t str {
+        self.format
+    }
+
+    pub fn args(&self) -> &[Arg<'t>] {
+        &self.args
+    }
+
+    pub fn format_args(
+        &self,
+        format: &str,
+        args: &[Arg],
+        parent_hint: Option<&DisplayHint>,
+    ) -> String {
         self.format_args_real(format, args, parent_hint).unwrap() // cannot fail, we only write to a `String`
     }
 
